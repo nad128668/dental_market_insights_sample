@@ -5,6 +5,8 @@
 
 **🔴 Live Demo:** [View the interactive sample dashboard here!](https://nad128668.github.io/dental_market_insights_sample/)
 
+[**FULL ACCESS:** Unlock 2,200+ Clinics & 126k+ Reviews](https://blueorion.gumroad.com/l/us_dental_clinics_insights)
+
 Welcome! This package gives you everything you need to **identify dental clinics with real business problems and turn them into potential clients.**
 
 ---
