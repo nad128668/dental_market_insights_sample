@@ -1,0 +1,944 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dental Market & Reputation Dashboard</title>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: rgba(30, 41, 59, 0.7);
+            --card-border: rgba(255, 255, 255, 0.1);
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --accent-1: #3b82f6;
+            --accent-2: #8b5cf6;
+            --accent-3: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --success: #10b981;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(59, 130, 246, 0.15) 0px, transparent 50%),
+                radial-gradient(at 100% 0%, rgba(139, 92, 246, 0.15) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(16, 185, 129, 0.15) 0px, transparent 50%);
+            background-attachment: fixed;
+            color: var(--text-primary);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        header {
+            margin-bottom: 3rem;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            background: linear-gradient(to right, #60a5fa, #a78bfa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.5rem;
+        }
+
+        header p {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+        }
+
+        /* Glassmorphism Cards */
+        .glass-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .glass-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.15);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .card-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-top: 0;
+            margin-bottom: 1.5rem;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* KPIs Grid */
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .kpi-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin: 0.5rem 0;
+            color: var(--accent-1);
+        }
+
+        .kpi-label {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        /* Charts Grid */
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(600px, 1fr));
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 350px;
+            width: 100%;
+            cursor: pointer;
+        }
+
+        /* Modal Styles */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(5px);
+            z-index: 100;
+            justify-content: center;
+            align-items: center;
+            padding: 2rem;
+            box-sizing: border-box;
+        }
+
+        .modal-content {
+            background: var(--bg-color);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            width: 100%;
+            max-width: 1200px;
+            max-height: 90vh;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            animation: modalIn 0.3s ease-out;
+        }
+
+        .modal-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--card-border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header h2 {
+            margin: 0;
+            font-size: 1.5rem;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .btn {
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            border: none;
+            font-family: 'Inter', sans-serif;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: var(--accent-1);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #2563eb;
+        }
+
+        .btn-close {
+            background: transparent;
+            border: 1px solid var(--text-secondary);
+            color: var(--text-primary);
+        }
+
+        .btn-close:hover {
+            background: rgba(255,255,255,0.1);
+        }
+
+        .modal-body {
+            padding: 1.5rem;
+            overflow-y: auto;
+        }
+
+        /* Table Styles */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+
+        .data-table th, .data-table td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--card-border);
+        }
+
+        .data-table th {
+            color: var(--text-secondary);
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+            background: var(--card-bg);
+            z-index: 10;
+            transition: color 0.2s;
+            box-shadow: 0 1px 0 var(--card-border);
+        }
+
+        .data-table th.sortable:hover {
+            color: var(--text-primary);
+        }
+
+        .data-table tr:hover {
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes modalIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        .animated { animation: fadeIn 0.6s ease-out forwards; }
+        .delay-1 { animation-delay: 0.1s; }
+        .delay-2 { animation-delay: 0.2s; }
+        .delay-3 { animation-delay: 0.3s; }
+        .delay-4 { animation-delay: 0.4s; }
+
+        @media (max-width: 768px) {
+            .charts-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+    <div style="background: var(--accent-1); color: white; text-align: center; padding: 12px; font-weight: bold; font-size: 1.1rem; z-index: 9999; position: sticky; top: 0; box-shadow: 0 2px 10px rgba(0,0,0,0.5);">
+        🔒 This is a free sample (showing max 20 records per view). 
+        <a href="https://blueorion.gumroad.com/l/us_dental_clinics_insights" target="_blank" style="color: #fff; text-decoration: underline; margin-left: 10px;">Unlock 2,200+ Clinics & 126k+ Reviews</a>
+    </div>
+
+
+    <div class="container">
+        <header class="animated">
+            <h1>Dental Market Insights</h1>
+            <p id="processingDate" style="color:var(--accent-1); font-weight:600; margin-bottom: 0.5rem;"></p>
+            <p>Aggregated analysis of struggling practices, reputation signals, and patient sentiment. <br><span style="color:var(--text-secondary); font-size:0.9rem;">Click any chart element to view and download the raw data!</span></p>
+            <p style="color: var(--text-secondary); font-size: 0.95rem; margin-top: 1rem; font-style: italic;">
+                * Up to 300 latest reviews fetched per practice for analyzing these insights.
+            </p>
+        </header>
+
+        <div class="kpi-grid">
+            <div class="glass-card animated delay-1">
+                <div class="kpi-label">Total Places Tracked</div>
+                <div class="kpi-value" id="kpi-places">0</div>
+                <div style="color: var(--text-secondary); font-size: 0.85rem;">Across all filtered datasets</div>
+            </div>
+            <div class="glass-card animated delay-1">
+                <div class="kpi-label">Total Reviews Processed</div>
+                <div class="kpi-value" id="kpi-reviews" style="color: var(--accent-2)">0</div>
+                <div style="color: var(--text-secondary); font-size: 0.85rem;">Used for keyword & response analysis</div>
+            </div>
+            <div class="glass-card animated delay-2" style="cursor: pointer;" onclick="showPlacesModal('Places with No Recent Reviews (> 1 Month)', dashboardData.mappings.stale_reviews)">
+                <div class="kpi-label">Stale Reviews (> 1 Month)</div>
+                <div class="kpi-value" id="kpi-stale" style="color: var(--warning)">0</div>
+                <div style="color: var(--text-secondary); font-size: 0.85rem;">Places needing recent feedback</div>
+            </div>
+            <div class="glass-card animated delay-2">
+                <div class="kpi-label">Missing Images</div>
+                <div class="kpi-value" id="kpi-image" style="color: var(--danger)">0</div>
+                <div style="color: var(--text-secondary); font-size: 0.85rem;">Places with 0 uploaded images</div>
+            </div>
+            <div class="glass-card animated delay-2">
+                <div class="kpi-label">Missing Phone Number</div>
+                <div class="kpi-value" id="kpi-phone" style="color: var(--danger)">0</div>
+                <div style="color: var(--text-secondary); font-size: 0.85rem;">Basic contact info missing</div>
+            </div>
+
+            <div class="glass-card animated delay-3">
+                <div class="kpi-label">Owner Response Rate</div>
+                <div class="kpi-value" id="kpi-response" style="color: var(--success)">0%</div>
+                <div style="color: var(--text-secondary); font-size: 0.85rem;">To negative reviews (1-2 stars)</div>
+            </div>
+        </div>
+
+        <div class="charts-grid">
+            <div class="glass-card animated delay-3">
+                <h2 class="card-title">📍 Top Markets: Struggling Practices</h2>
+                <div style="overflow-y: auto; max-height: 400px; padding-right: 10px;">
+                    <div class="chart-container" id="citiesChartContainer">
+                        <canvas id="citiesChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div class="glass-card animated delay-4">
+                <h2 class="card-title">📊 Score Distribution</h2>
+                <div class="chart-container">
+                    <canvas id="scoresChart"></canvas>
+                </div>
+            </div>
+
+            <div class="glass-card animated delay-4">
+                <h2 class="card-title">🎯 Reputation Matrix</h2>
+                <div class="chart-container">
+                    <canvas id="matrixChart"></canvas>
+                </div>
+            </div>
+
+            <div class="glass-card animated delay-4">
+                <h2 class="card-title">🤬 Top Pain Points (Bad Reviews)</h2>
+                <div class="chart-container">
+                    <canvas id="keywordsChart"></canvas>
+                </div>
+            </div>
+
+            <div class="glass-card animated delay-4">
+                <h2 class="card-title">📅 Online Booking Adoption vs Reviews</h2>
+                <div class="chart-container">
+                    <canvas id="bookingChart"></canvas>
+                </div>
+            </div>
+
+            <div class="glass-card animated delay-4">
+                <h2 class="card-title">⏳ Age of Reviews</h2>
+                <div class="chart-container">
+                    <canvas id="reviewAgeChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Profile Metrics Doughnuts -->
+            <div class="glass-card animated delay-5">
+                <h2 class="card-title">⏳ Feedback Status</h2>
+                <div class="chart-container">
+                    <canvas id="staleChart"></canvas>
+                </div>
+            </div>
+            
+            <div class="glass-card animated delay-5">
+                <h2 class="card-title">📸 Image Status</h2>
+                <div class="chart-container">
+                    <canvas id="imageChart"></canvas>
+                </div>
+            </div>
+            
+            <div class="glass-card animated delay-5">
+                <h2 class="card-title">📞 Phone Status</h2>
+                <div class="chart-container">
+                    <canvas id="phoneChart"></canvas>
+                </div>
+            </div>
+            
+            <div class="glass-card animated delay-5">
+                <h2 class="card-title">💬 Owner Response (1-2 Stars)</h2>
+                <div class="chart-container">
+                    <canvas id="responseChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Data Modal -->
+    <div class="modal-overlay" id="dataModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">Data View</h2>
+                <div class="modal-actions">
+                    <button class="btn btn-primary" onclick="downloadCSV()">⬇️ Download CSV</button>
+                    <button class="btn btn-close" onclick="closeModal()">Close</button>
+                </div>
+            </div>
+            <div class="modal-body">
+                <div id="placeDetailsContainer" style="display: none; margin-bottom: 1.5rem; padding: 1.5rem; background: rgba(255,255,255,0.05); border-radius: 8px; border: 1px solid var(--card-border);"></div>
+                <div style="overflow-x: auto;">
+                    <table class="data-table" id="dataTable">
+                        <thead>
+                            <tr id="tableHeaderRow"></tr>
+                        </thead>
+                        <tbody id="tableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Load the data generated by python script -->
+    <script src="dashboard_data.js"></script>
+    
+    <script>
+        let currentModalData = [];
+        let currentModalColumns = [];
+        let currentDisplayColumns = [];
+        let currentIsPlaceList = false;
+        let currentSortState = { column: null, direction: 'asc' };
+
+        // Global Chart Defaults for dark mode
+        Chart.defaults.color = '#94a3b8';
+        Chart.defaults.font.family = "'Inter', sans-serif";
+        Chart.defaults.plugins.tooltip.backgroundColor = 'rgba(15, 23, 42, 0.9)';
+        Chart.defaults.plugins.tooltip.padding = 12;
+        Chart.defaults.plugins.tooltip.cornerRadius = 8;
+        Chart.defaults.plugins.tooltip.titleFont = { size: 14, weight: 'bold' };
+        Chart.defaults.plugins.tooltip.bodyFont = { size: 13 };
+
+        function initDashboard() {
+            if (typeof dashboardData === 'undefined') {
+                console.error("Dashboard data not loaded! Please run generate_dashboard_data.py first.");
+                return;
+            }
+
+            const data = dashboardData;
+
+            // Meta
+            document.getElementById('processingDate').innerText = "Data Processed: " + (data.meta?.processing_date || "Unknown");
+
+            document.getElementById('kpi-places').innerText = data.kpis.total_places.toLocaleString();
+            document.getElementById('kpi-reviews').innerText = data.kpis.total_reviews.toLocaleString();
+            document.getElementById('kpi-stale').innerText = (data.kpis.stale_places_count || 0).toLocaleString();
+            document.getElementById('kpi-image').innerText = (data.kpis.no_image_count || 0).toLocaleString();
+            document.getElementById('kpi-phone').innerText = (data.kpis.no_phone_count || 0).toLocaleString();
+            document.getElementById('kpi-response').innerText = data.kpis.bad_review_response_rate + '%';
+
+            // 1. Cities Chart (Horizontal Bar)
+            const citiesKeys = Object.keys(data.mappings.cities);
+            
+            // Adjust container height dynamically based on number of cities
+            const citiesChartContainer = document.getElementById('citiesChartContainer');
+            if (citiesChartContainer) {
+                citiesChartContainer.style.height = Math.max(350, citiesKeys.length * 25) + 'px';
+            }
+
+            const citiesCtx = document.getElementById('citiesChart').getContext('2d');
+            new Chart(citiesCtx, {
+                type: 'bar',
+                data: {
+                    labels: citiesKeys,
+                    datasets: [{
+                        label: 'Low-Reviewed Places',
+                        data: citiesKeys.map(k => data.mappings.cities[k].length),
+                        backgroundColor: 'rgba(59, 130, 246, 0.7)',
+                        borderColor: 'rgba(59, 130, 246, 1)',
+                        borderWidth: 1,
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    onClick: (e, elements, chart) => {
+                        if (elements.length > 0) {
+                            const index = elements[0].index;
+                            const label = chart.data.labels[index];
+                            showPlacesModal(`Places in ${label}`, data.mappings.cities[label]);
+                        }
+                    }
+                }
+            });
+
+            // 2. Scores Distribution (Bar)
+            const scoresKeys = Object.keys(data.mappings.scores);
+            const scoresCtx = document.getElementById('scoresChart').getContext('2d');
+            new Chart(scoresCtx, {
+                type: 'bar',
+                data: {
+                    labels: scoresKeys,
+                    datasets: [{
+                        label: 'Places Count',
+                        data: scoresKeys.map(k => data.mappings.scores[k].length),
+                        backgroundColor: [
+                            'rgba(239, 68, 68, 0.7)',
+                            'rgba(245, 158, 11, 0.7)',
+                            'rgba(252, 211, 77, 0.7)',
+                            'rgba(52, 211, 153, 0.7)',
+                            'rgba(16, 185, 129, 0.7)'
+                        ],
+                        borderWidth: 0,
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    onClick: (e, elements, chart) => {
+                        if (elements.length > 0) {
+                            const index = elements[0].index;
+                            const label = chart.data.labels[index];
+                            showPlacesModal(`Places with ${label} Stars`, data.mappings.scores[label]);
+                        }
+                    }
+                }
+            });
+
+            // 3. Reputation Matrix (Doughnut)
+            const matrixMappingObj = {
+                'Crisis Mode (Fix Rating)': 'crisis_mode',
+                'Ghost Town (Get Reviews)': 'ghost_town',
+                'Struggling (Fix Both)': 'struggling'
+            };
+            const matrixLabels = Object.keys(matrixMappingObj);
+            
+            const matrixCtx = document.getElementById('matrixChart').getContext('2d');
+            new Chart(matrixCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: matrixLabels,
+                    datasets: [{
+                        data: matrixLabels.map(l => data.mappings.matrix[matrixMappingObj[l]].length),
+                        backgroundColor: [
+                            'rgba(239, 68, 68, 0.8)',
+                            'rgba(139, 92, 246, 0.8)',
+                            'rgba(245, 158, 11, 0.8)'
+                        ],
+                        borderWidth: 0,
+                        hoverOffset: 10
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '65%',
+                    plugins: { legend: { position: 'right' } },
+                    onClick: (e, elements, chart) => {
+                        if (elements.length > 0) {
+                            const index = elements[0].index;
+                            const label = chart.data.labels[index];
+                            const internalKey = matrixMappingObj[label];
+                            showPlacesModal(`Category: ${label}`, data.mappings.matrix[internalKey]);
+                        }
+                    }
+                }
+            });
+
+            // 4. Bad Keywords (Bar)
+            const keywordKeys = Object.keys(data.mappings.bad_keywords);
+            const keywordsCtx = document.getElementById('keywordsChart').getContext('2d');
+            new Chart(keywordsCtx, {
+                type: 'bar',
+                data: {
+                    labels: keywordKeys,
+                    datasets: [{
+                        label: 'Mentions in Bad Reviews',
+                        data: keywordKeys.map(k => data.mappings.bad_keywords[k].length),
+                        backgroundColor: 'rgba(139, 92, 246, 0.7)',
+                        borderColor: 'rgba(139, 92, 246, 1)',
+                        borderWidth: 1,
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    onClick: (e, elements, chart) => {
+                        if (elements.length > 0) {
+                            const index = elements[0].index;
+                            const label = chart.data.labels[index];
+                            showReviewsModal(`Reviews mentioning "${label}"`, data.mappings.bad_keywords[label]);
+                        }
+                    }
+                }
+            });
+
+            // 5. Booking Chart (Stacked Bar)
+            const bookingBuckets = ["0-20", "21-50", "51-100", "101-200", "200+"];
+            const bookingCtx = document.getElementById('bookingChart').getContext('2d');
+            new Chart(bookingCtx, {
+                type: 'bar',
+                data: {
+                    labels: bookingBuckets,
+                    datasets: [
+                        {
+                            label: 'With Booking URL',
+                            data: bookingBuckets.map(b => data.mappings.booking[b].with_url.length),
+                            backgroundColor: 'rgba(16, 185, 129, 0.8)' // Success Green
+                        },
+                        {
+                            label: 'Without Booking URL',
+                            data: bookingBuckets.map(b => data.mappings.booking[b].without_url.length),
+                            backgroundColor: 'rgba(239, 68, 68, 0.8)' // Danger Red
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: { stacked: true },
+                        y: { stacked: true }
+                    },
+                    plugins: { legend: { position: 'bottom' } },
+                    onClick: (e, elements, chart) => {
+                        if (elements.length > 0) {
+                            const datasetIndex = elements[0].datasetIndex;
+                            const index = elements[0].index;
+                            const bucket = chart.data.labels[index];
+                            const hasUrl = datasetIndex === 0;
+                            const fids = hasUrl ? data.mappings.booking[bucket].with_url : data.mappings.booking[bucket].without_url;
+                            showPlacesModal(`Places (${bucket} Reviews) - ${hasUrl ? 'Has Booking URL' : 'No Booking URL'}`, fids);
+                        }
+                    }
+                }
+            });
+
+            // 6. Review Age (Doughnut)
+            const ageBuckets = ["< 1 Month", "1 - 6 Months", "6 - 12 Months", "1 - 2 Years", "2+ Years"];
+            const ageCtx = document.getElementById('reviewAgeChart').getContext('2d');
+            new Chart(ageCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ageBuckets,
+                    datasets: [{
+                        data: ageBuckets.map(b => data.mappings.review_ages[b] ? data.mappings.review_ages[b].length : 0),
+                        backgroundColor: [
+                            'rgba(16, 185, 129, 0.8)', // Green
+                            'rgba(59, 130, 246, 0.8)', // Blue
+                            'rgba(245, 158, 11, 0.8)', // Yellow
+                            'rgba(239, 68, 68, 0.8)',  // Red
+                            'rgba(139, 92, 246, 0.8)'  // Purple
+                        ],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '65%',
+                    plugins: { legend: { position: 'right' } },
+                    onClick: (e, elements, chart) => {
+                        if (elements.length > 0) {
+                            const index = elements[0].index;
+                            const label = chart.data.labels[index];
+                            showReviewsModal(`Reviews from ${label}`, data.mappings.review_ages[label]);
+                        }
+                    }
+                }
+            });
+
+            // 7. Profile Metrics (Doughnuts)
+            function createProfileChart(canvasId, labels, dataCounts, colors, mappingsArray, isReviews = false) {
+                new Chart(document.getElementById(canvasId).getContext('2d'), {
+                    type: 'doughnut',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            data: dataCounts,
+                            backgroundColor: colors,
+                            borderWidth: 0
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        cutout: '65%',
+                        plugins: { legend: { position: 'bottom' } },
+                        onClick: (e, elements, chart) => {
+                            if (elements.length > 0) {
+                                const index = elements[0].index;
+                                const label = chart.data.labels[index];
+                                if (isReviews) {
+                                    showReviewsModal(`Reviews: ${label}`, mappingsArray[index]);
+                                } else {
+                                    showPlacesModal(`Category: ${label}`, mappingsArray[index]);
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            const pm = data.mappings.profile_metrics;
+            if (pm) {
+                createProfileChart(
+                    'staleChart', 
+                    ['Stale (> 30 Days)', 'Recent (< 30 Days)'], 
+                    [pm.stale_reviews.length, pm.recent_reviews.length], 
+                    ['rgba(245, 158, 11, 0.8)', 'rgba(16, 185, 129, 0.8)'],
+                    [pm.stale_reviews, pm.recent_reviews]
+                );
+
+                createProfileChart(
+                    'imageChart', 
+                    ['Missing Images', 'Has Images'], 
+                    [pm.missing_image.length, pm.has_image.length], 
+                    ['rgba(239, 68, 68, 0.8)', 'rgba(16, 185, 129, 0.8)'],
+                    [pm.missing_image, pm.has_image]
+                );
+
+                createProfileChart(
+                    'phoneChart', 
+                    ['Missing Phone', 'Has Phone'], 
+                    [pm.missing_phone.length, pm.has_phone.length], 
+                    ['rgba(239, 68, 68, 0.8)', 'rgba(16, 185, 129, 0.8)'],
+                    [pm.missing_phone, pm.has_phone]
+                );
+                
+                createProfileChart(
+                    'responseChart', 
+                    ['Unresponded', 'Responded'], 
+                    [pm.bad_reviews_unresponded.length, pm.bad_reviews_responded.length], 
+                    ['rgba(239, 68, 68, 0.8)', 'rgba(16, 185, 129, 0.8)'],
+                    [pm.bad_reviews_unresponded, pm.bad_reviews_responded],
+                    true
+                );
+            }
+        }
+
+        function showPlacesModal(title, fidList) {
+            const placesRaw = dashboardData.raw_data.places;
+            const columns = ["business_name", "phone", "city", "score", "review_count", "has_booking_url"];
+            const prettyColumns = ["Business Name", "Phone", "City", "Score", "Reviews", "Booking URL?"];
+            
+            const rows = fidList.map(fid => placesRaw[fid]).filter(Boolean).slice(0, 20);
+            
+            renderModal(title, prettyColumns, columns, rows, 'place');
+        }
+
+        function showReviewsModal(title, reviewIdList) {
+            const reviewsRaw = dashboardData.raw_data.reviews;
+            const columns = ["place_name", "reviewer_name", "stars", "date", "text", "context", "owner_responded"];
+            const prettyColumns = ["Place Name", "Reviewer", "Stars", "Date", "Review Text", "Context", "Owner Responded?"];
+            
+            const rows = reviewIdList.map(rid => reviewsRaw[rid]).filter(Boolean);
+            
+            renderModal(title, prettyColumns, columns, rows, 'review');
+        }
+
+        function sortTable(dataColIndex) {
+            const dataCol = currentModalColumns[dataColIndex];
+            
+            if (currentSortState.column === dataCol) {
+                currentSortState.direction = currentSortState.direction === 'asc' ? 'desc' : 'asc';
+            } else {
+                currentSortState.column = dataCol;
+                currentSortState.direction = 'asc';
+            }
+            
+            currentModalData.sort((a, b) => {
+                let valA = a[dataCol];
+                let valB = b[dataCol];
+                if (valA === null || valA === undefined) valA = '';
+                if (valB === null || valB === undefined) valB = '';
+                if (typeof valA === 'string') valA = valA.toLowerCase();
+                if (typeof valB === 'string') valB = valB.toLowerCase();
+                if (valA < valB) return currentSortState.direction === 'asc' ? -1 : 1;
+                if (valA > valB) return currentSortState.direction === 'asc' ? 1 : -1;
+                return 0;
+            });
+            
+            renderTableHeaders();
+            renderTableBody();
+        }
+
+        function renderTableHeaders() {
+            const thead = document.getElementById('tableHeaderRow');
+            thead.innerHTML = '';
+            currentDisplayColumns.forEach((colName, idx) => {
+                const th = document.createElement('th');
+                th.className = 'sortable';
+                th.style.cursor = 'pointer';
+                
+                let text = colName;
+                if (currentSortState.column === currentModalColumns[idx]) {
+                    text += currentSortState.direction === 'asc' ? ' 🔼' : ' 🔽';
+                }
+                th.innerText = text;
+                th.onclick = () => sortTable(idx);
+                thead.appendChild(th);
+            });
+            
+            if (currentActionType) {
+                const th = document.createElement('th');
+                th.innerText = "Action";
+                thead.appendChild(th);
+            }
+        }
+
+        function renderTableBody() {
+            const tbody = document.getElementById('tableBody');
+            tbody.innerHTML = '';
+            currentModalData.forEach(row => {
+                const tr = document.createElement('tr');
+                currentModalColumns.forEach(col => {
+                    const td = document.createElement('td');
+                    if (col === "business_name" || col === "place_name") {
+                        if (row.place_id) {
+                            const a = document.createElement('a');
+                            a.href = `https://www.google.com/maps/place/?q=place_id:${row.place_id}`;
+                            a.target = '_blank';
+                            a.innerText = row[col] || '';
+                            a.style.color = 'var(--accent-1)';
+                            a.style.textDecoration = 'none';
+                            td.appendChild(a);
+                        } else {
+                            td.innerText = row[col] || '';
+                        }
+                    } else if (typeof row[col] === 'boolean') {
+                        td.innerText = row[col] ? 'Yes' : 'No';
+                    } else {
+                        td.innerText = row[col] || '';
+                    }
+                    tr.appendChild(td);
+                });
+                
+                if (currentActionType) {
+                    const tdAction = document.createElement('td');
+                    const btn = document.createElement('button');
+                    btn.className = 'btn btn-primary';
+                    btn.innerText = currentActionType === 'place' ? 'View More' : 'View Place';
+                    btn.style.padding = '0.3rem 0.6rem';
+                    btn.style.fontSize = '0.8rem';
+                    btn.onclick = () => showPlaceDetails(row.fid);
+                    tdAction.appendChild(btn);
+                    tr.appendChild(tdAction);
+                }
+
+                tbody.appendChild(tr);
+            });
+        }
+
+        function renderModal(title, displayColumns, dataColumns, rowData, actionType = null) {
+            document.getElementById('modalTitle').innerText = title;
+            document.getElementById('placeDetailsContainer').style.display = 'none';
+            currentModalData = rowData;
+            currentModalColumns = dataColumns;
+            currentDisplayColumns = displayColumns;
+            currentActionType = actionType;
+            currentSortState = { column: null, direction: 'asc' };
+
+            renderTableHeaders();
+            renderTableBody();
+
+            document.getElementById('dataModal').style.display = 'flex';
+        }
+
+        function showPlaceDetails(fid) {
+            const place = dashboardData.raw_data.places[fid];
+            if (!place) return;
+            
+            const container = document.getElementById('placeDetailsContainer');
+            container.style.display = 'block';
+            container.innerHTML = `
+                <h3 style="margin-top:0; margin-bottom: 1rem; color:var(--text-primary); font-size: 1.5rem;">${place.business_name}</h3>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; font-size: 0.95rem; color: var(--text-secondary);">
+                    <div><strong style="color:var(--text-primary);">Address:</strong><br>${place.address}</div>
+                    <div><strong style="color:var(--text-primary);">Phone:</strong><br>${place.phone}</div>
+                    <div><strong style="color:var(--text-primary);">Score:</strong><br>${place.score} (${place.review_count} reviews)</div>
+                    <div><strong style="color:var(--text-primary);">Google Maps:</strong><br><a href="https://www.google.com/maps/place/?q=place_id:${place.place_id}" target="_blank" style="color:var(--accent-1); text-decoration:none;">View on Maps ↗</a></div>
+                </div>
+            `;
+            
+            const reviewsRaw = dashboardData.raw_data.reviews;
+            const reviewIdList = Object.keys(reviewsRaw).filter(rid => reviewsRaw[rid].place_id === place.place_id);
+            
+            const columns = ["reviewer_name", "stars", "date", "text", "context", "owner_responded"];
+            const prettyColumns = ["Reviewer", "Stars", "Date", "Review Text", "Context", "Owner Responded?"];
+            const rows = reviewIdList.map(rid => reviewsRaw[rid]).filter(Boolean);
+            
+            document.getElementById('modalTitle').innerText = `Place Details`;
+            currentModalData = rows;
+            currentModalColumns = columns;
+            currentDisplayColumns = prettyColumns;
+            currentActionType = null;
+            currentSortState = { column: null, direction: 'asc' };
+
+            renderTableHeaders();
+            renderTableBody();
+        }
+
+        function closeModal() {
+            document.getElementById('dataModal').style.display = 'none';
+        }
+
+        function downloadCSV() {
+            if (!currentModalData || currentModalData.length === 0) return;
+
+            // Create CSV header
+            let csvContent = currentModalColumns.join(",") + "\n";
+
+            // Add rows
+            currentModalData.forEach(row => {
+                const rowString = currentModalColumns.map(col => {
+                    let cell = row[col] === null || row[col] === undefined ? "" : row[col].toString();
+                    // Escape quotes and wrap in quotes if there's a comma
+                    cell = cell.replace(/"/g, '""');
+                    if (cell.indexOf(",") >= 0 || cell.indexOf("\n") >= 0) {
+                        cell = `"${cell}"`;
+                    }
+                    return cell;
+                }).join(",");
+                csvContent += rowString + "\n";
+            });
+
+            // Trigger download
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            const filename = document.getElementById('modalTitle').innerText.replace(/[^a-z0-9]/gi, '_').toLowerCase() + ".csv";
+            
+            link.setAttribute("href", url);
+            link.setAttribute("download", filename);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // Initialize on load
+        window.addEventListener('DOMContentLoaded', initDashboard);
+    </script>
+</body>
+</html>
