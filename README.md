@@ -3,6 +3,8 @@
 
 ### Dashboard + Lead Intelligence Data
 
+**🔴 Live Demo:** [View the interactive sample dashboard here!](https://nad128668.github.io/dental_market_insights_sample/)
+
 Welcome! This package gives you everything you need to **identify dental clinics with real business problems and turn them into potential clients.**
 
 ---
